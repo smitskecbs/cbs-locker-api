@@ -12,6 +12,30 @@ No authentication is required for verification endpoints. Rate limiting may appl
 
 ---
 
+## GET /health
+
+Simple service health check. Does not call Solana RPC.
+
+### Example Request
+
+```
+GET /health
+```
+
+### Example Response
+
+```json
+{
+  "status": "ok",
+  "service": "CBS Locker API",
+  "version": "1.0.0",
+  "network": "mainnet",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU"
+}
+```
+
+---
+
 ## GET /api/v1/verify/lock/{lockPda}
 
 Verify a specific CBS Locker lock account by its Program Derived Address (PDA).
