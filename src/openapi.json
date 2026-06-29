@@ -1,0 +1,361 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CBS Locker API",
+    "description": "Public verification API for CBS Token Locker on Solana mainnet.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current host"
+    }
+  ],
+  "tags": [
+    { "name": "Meta", "description": "Service metadata and health" },
+    { "name": "Verify", "description": "On-chain lock verification" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Meta"],
+        "summary": "Health check",
+        "description": "Simple service health check. Does not call Solana RPC.",
+        "responses": {
+          "200": {
+            "description": "Service is running",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" },
+                "example": {
+                  "status": "ok",
+                  "service": "CBS Locker API",
+                  "version": "1.0.0",
+                  "network": "mainnet",
+                  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api": {
+      "get": {
+        "tags": ["Meta"],
+        "summary": "API metadata",
+        "description": "Service metadata and available endpoint paths.",
+        "responses": {
+          "200": {
+            "description": "API metadata",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiMetadataResponse" },
+                "example": {
+                  "name": "CBS Locker API",
+                  "version": "1.0.0",
+                  "network": "mainnet",
+                  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+                  "documentation": "/docs",
+                  "health": "/health",
+                  "endpoints": [
+                    "/api/v1/verify/lock/:lockPda",
+                    "/api/v1/verify/mint/:mint",
+                    "/api/v1/verify/token/:mint"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/lock/{lockPda}": {
+      "get": {
+        "tags": ["Verify"],
+        "summary": "Verify a lock account",
+        "description": "Fetch and decode a CBS Locker lock account by its PDA.",
+        "parameters": [
+          {
+            "name": "lockPda",
+            "in": "path",
+            "required": true,
+            "description": "Base58-encoded lock account address",
+            "schema": { "type": "string" },
+            "example": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyLockResponse" },
+                "example": {
+                  "verified": true,
+                  "accountExists": true,
+                  "programMatches": true,
+                  "lockPda": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG",
+                  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+                  "lock": {
+                    "owner": "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+                    "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+                    "vault": "7kKtRoQuE3ZRJHRUtcUX7HPwJB3t6tLDeZuDXN3gJx7v",
+                    "amount": "10916771364",
+                    "unlockTimestamp": 1784359800,
+                    "createdAt": 1781767586,
+                    "lockSeed": "1781767584981",
+                    "isUnlocked": false,
+                    "bump": 255,
+                    "vaultBump": 254,
+                    "projectName": "CBS_Coin (2/2)",
+                    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                    "tokenType": "lp"
+                  },
+                  "message": "Valid CBS Locker account."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Solana RPC unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyLockResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/mint/{mint}": {
+      "get": {
+        "tags": ["Verify"],
+        "summary": "Find locks by mint",
+        "description": "Find all CBS Locker lock accounts for a token mint using getProgramAccounts.",
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "path",
+            "required": true,
+            "description": "Base58-encoded token mint address",
+            "schema": { "type": "string" },
+            "example": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mint lock search result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyMintResponse" },
+                "example": {
+                  "verified": true,
+                  "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+                  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+                  "totalLocks": 7,
+                  "activeLocks": 1,
+                  "locks": [
+                    {
+                      "lockPda": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG",
+                      "lock": {
+                        "owner": "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+                        "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+                        "vault": "7kKtRoQuE3ZRJHRUtcUX7HPwJB3t6tLDeZuDXN3gJx7v",
+                        "amount": "10916771364",
+                        "unlockTimestamp": 1784359800,
+                        "createdAt": 1781767586,
+                        "lockSeed": "1781767584981",
+                        "isUnlocked": false,
+                        "bump": 255,
+                        "vaultBump": 254,
+                        "projectName": "CBS_Coin (2/2)",
+                        "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                        "tokenType": "lp"
+                      }
+                    }
+                  ],
+                  "message": "CBS Locker locks found for mint."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Solana RPC unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyMintResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/token/{mint}": {
+      "get": {
+        "tags": ["Verify"],
+        "summary": "Token lock summary",
+        "description": "Integration-friendly summary for a token mint based on CBS Locker lock search.",
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "path",
+            "required": true,
+            "description": "Base58-encoded token mint address",
+            "schema": { "type": "string" },
+            "example": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token summary result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyTokenResponse" },
+                "example": {
+                  "verified": true,
+                  "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+                  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+                  "locker": "CBS Token Locker",
+                  "tokenType": "lp",
+                  "totalLocks": 7,
+                  "activeLocks": 1,
+                  "activeLockedAmount": "10916771364",
+                  "nextUnlockTimestamp": 1784359800,
+                  "largestActiveLock": {
+                    "lockPda": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG",
+                    "amount": "10916771364",
+                    "unlockTimestamp": 1784359800
+                  },
+                  "message": "Active CBS Locker lock found for mint."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Solana RPC unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VerifyTokenResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" },
+          "service": { "type": "string", "example": "CBS Locker API" },
+          "version": { "type": "string", "example": "1.0.0" },
+          "network": { "type": "string", "example": "mainnet" },
+          "programId": {
+            "type": "string",
+            "example": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU"
+          }
+        }
+      },
+      "ApiMetadataResponse": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "network": { "type": "string" },
+          "programId": { "type": "string" },
+          "documentation": { "type": "string", "example": "/docs" },
+          "health": { "type": "string", "example": "/health" },
+          "endpoints": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "DecodedLock": {
+        "type": "object",
+        "properties": {
+          "owner": { "type": "string" },
+          "mint": { "type": "string" },
+          "vault": { "type": "string" },
+          "amount": { "type": "string" },
+          "unlockTimestamp": { "type": "integer" },
+          "createdAt": { "type": "integer" },
+          "lockSeed": { "type": "string" },
+          "isUnlocked": { "type": "boolean" },
+          "bump": { "type": "integer" },
+          "vaultBump": { "type": "integer" },
+          "projectName": { "type": "string" },
+          "tokenProgram": { "type": "string" },
+          "tokenType": {
+            "type": "string",
+            "enum": ["spl", "lp", "clmm", "unknown"]
+          }
+        }
+      },
+      "MintLockEntry": {
+        "type": "object",
+        "properties": {
+          "lockPda": { "type": "string" },
+          "lock": { "$ref": "#/components/schemas/DecodedLock" }
+        }
+      },
+      "VerifyLockResponse": {
+        "type": "object",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "accountExists": { "type": "boolean" },
+          "programMatches": { "type": "boolean" },
+          "lockPda": { "type": "string" },
+          "programId": { "type": "string" },
+          "lock": { "$ref": "#/components/schemas/DecodedLock" },
+          "message": { "type": "string" }
+        }
+      },
+      "VerifyMintResponse": {
+        "type": "object",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "mint": { "type": "string" },
+          "programId": { "type": "string" },
+          "totalLocks": { "type": "integer" },
+          "activeLocks": { "type": "integer" },
+          "locks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MintLockEntry" }
+          },
+          "message": { "type": "string" }
+        }
+      },
+      "LargestActiveLock": {
+        "type": "object",
+        "properties": {
+          "lockPda": { "type": "string" },
+          "amount": { "type": "string" },
+          "unlockTimestamp": { "type": "integer" }
+        }
+      },
+      "VerifyTokenResponse": {
+        "type": "object",
+        "properties": {
+          "verified": { "type": "boolean" },
+          "mint": { "type": "string" },
+          "programId": { "type": "string" },
+          "locker": { "type": "string" },
+          "tokenType": {
+            "type": "string",
+            "enum": ["spl", "lp", "clmm", "unknown"]
+          },
+          "totalLocks": { "type": "integer" },
+          "activeLocks": { "type": "integer" },
+          "activeLockedAmount": { "type": "string" },
+          "nextUnlockTimestamp": { "type": "integer" },
+          "largestActiveLock": { "$ref": "#/components/schemas/LargestActiveLock" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

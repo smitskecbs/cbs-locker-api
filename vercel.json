@@ -1,6 +1,8 @@
 {
   "buildCommand": "npm run build",
   "rewrites": [
+    { "source": "/docs", "destination": "/api" },
+    { "source": "/openapi.json", "destination": "/api" },
     { "source": "/(.*)", "destination": "/api" }
   ]
 }

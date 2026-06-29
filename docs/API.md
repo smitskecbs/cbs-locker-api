@@ -66,6 +66,32 @@ GET /api
 
 ---
 
+## GET /openapi.json
+
+OpenAPI 3.0 specification for this API (JSON).
+
+### Example Request
+
+```
+GET /openapi.json
+```
+
+---
+
+## GET /docs
+
+Interactive Swagger UI for this API. Loads the spec from `/openapi.json`.
+
+### Example Request
+
+```
+GET /docs
+```
+
+Open in a browser to explore and try endpoints.
+
+---
+
 ## GET /api/v1/verify/lock/{lockPda}
 
 Verify a specific CBS Locker lock account by its Program Derived Address (PDA).
