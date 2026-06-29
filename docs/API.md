@@ -36,6 +36,36 @@ GET /health
 
 ---
 
+## GET /api
+
+Service metadata and available endpoint paths.
+
+### Example Request
+
+```
+GET /api
+```
+
+### Example Response
+
+```json
+{
+  "name": "CBS Locker API",
+  "version": "1.0.0",
+  "network": "mainnet",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+  "documentation": "/docs",
+  "health": "/health",
+  "endpoints": [
+    "/api/v1/verify/lock/:lockPda",
+    "/api/v1/verify/mint/:mint",
+    "/api/v1/verify/token/:mint"
+  ]
+}
+```
+
+---
+
 ## GET /api/v1/verify/lock/{lockPda}
 
 Verify a specific CBS Locker lock account by its Program Derived Address (PDA).
