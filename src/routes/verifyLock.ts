@@ -1,69 +1,78 @@
 import { Router } from "express";
-import { PublicKey } from "@solana/web3.js";
+import { address, fetchEncodedAccount, type Address } from "@solana/kit";
 import { decodeLockAccount } from "../services/decodeLock";
-import { CBS_LOCKER_PROGRAM_ID, connection } from "../services/solana";
+import { CBS_LOCKER_PROGRAM_ID, rpc } from "../services/solana";
 
 export const verifyLockRouter = Router();
+
+function isValidAddress(value: string): value is Address {
+  try {
+    address(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 verifyLockRouter.get("/:lockPda", async (req, res) => {
   const { lockPda } = req.params;
 
-  // Step 1: Validate that lockPda is a valid Solana PublicKey
-  let publicKey: PublicKey;
-  try {
-    publicKey = new PublicKey(lockPda);
-  } catch {
+  // Step 1: Validate that lockPda is a valid Solana address
+  if (!isValidAddress(lockPda)) {
     return res.json({
       verified: false,
       accountExists: false,
       programMatches: false,
       lockPda,
-      programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
+      programId: CBS_LOCKER_PROGRAM_ID,
       message:
         "Invalid Solana address. lockPda must be a valid base58 public key.",
     });
   }
 
+  const lockAddress = address(lockPda);
+
   // Step 2: Fetch the account from Solana
   try {
-    const accountInfo = await connection.getAccountInfo(publicKey);
+    const encodedAccount = await fetchEncodedAccount(rpc, lockAddress);
 
     // Step 3: Check the account exists
-    if (!accountInfo) {
+    if (!encodedAccount.exists) {
       return res.json({
         verified: false,
         accountExists: false,
         programMatches: false,
-        lockPda: publicKey.toBase58(),
-        programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
+        lockPda: lockAddress,
+        programId: CBS_LOCKER_PROGRAM_ID,
         message:
           "Account not found on Solana. This address may not exist or may have been closed.",
       });
     }
 
     // Step 4: Check owner program equals CBS Locker
-    const programMatches = accountInfo.owner.equals(CBS_LOCKER_PROGRAM_ID);
+    const programMatches =
+      encodedAccount.programAddress === CBS_LOCKER_PROGRAM_ID;
 
     if (!programMatches) {
       return res.json({
         verified: false,
         accountExists: true,
         programMatches: false,
-        lockPda: publicKey.toBase58(),
-        programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
-        message: `Account exists but is owned by a different program (${accountInfo.owner.toBase58()}), not CBS Locker.`,
+        lockPda: lockAddress,
+        programId: CBS_LOCKER_PROGRAM_ID,
+        message: `Account exists but is owned by a different program (${encodedAccount.programAddress}), not CBS Locker.`,
       });
     }
 
-    const decoded = decodeLockAccount(accountInfo.data);
+    const decoded = decodeLockAccount(Buffer.from(encodedAccount.data));
 
     if (!decoded.ok) {
       return res.json({
         verified: false,
         accountExists: true,
         programMatches: true,
-        lockPda: publicKey.toBase58(),
-        programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
+        lockPda: lockAddress,
+        programId: CBS_LOCKER_PROGRAM_ID,
         message: decoded.message,
       });
     }
@@ -72,8 +81,8 @@ verifyLockRouter.get("/:lockPda", async (req, res) => {
       verified: true,
       accountExists: true,
       programMatches: true,
-      lockPda: publicKey.toBase58(),
-      programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
+      lockPda: lockAddress,
+      programId: CBS_LOCKER_PROGRAM_ID,
       lock: decoded.lock,
       message: "Valid CBS Locker account.",
     });
@@ -82,8 +91,8 @@ verifyLockRouter.get("/:lockPda", async (req, res) => {
       verified: false,
       accountExists: false,
       programMatches: false,
-      lockPda: publicKey.toBase58(),
-      programId: CBS_LOCKER_PROGRAM_ID.toBase58(),
+      lockPda: lockAddress,
+      programId: CBS_LOCKER_PROGRAM_ID,
       message: "Failed to reach Solana RPC. Check your internet connection.",
     });
   }

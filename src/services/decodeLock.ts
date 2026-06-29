@@ -1,10 +1,12 @@
-import { PublicKey } from "@solana/web3.js";
+import { getAddressDecoder } from "@solana/addresses";
 import { DecodedLock, TokenType } from "../types/lock";
 
 export const TOKEN_LOCK_ACCOUNT_SIZE = 220;
 
+const addressDecoder = getAddressDecoder();
+
 function readPubkey(data: Buffer, offset: number): string {
-  return new PublicKey(data.subarray(offset, offset + 32)).toBase58();
+  return addressDecoder.decode(data.subarray(offset, offset + 32));
 }
 
 function readU64(data: Buffer, offset: number): bigint {
