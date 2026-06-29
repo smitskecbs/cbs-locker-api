@@ -57,7 +57,7 @@ GET /api/v1/verify/lock/7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
 
 ## GET /api/v1/verify/mint/{mint}
 
-Verify lock coverage for a token mint. Returns aggregate and individual lock information for all CBS Locker accounts associated with the mint.
+Find all CBS Locker lock accounts for a token mint. Uses `getProgramAccounts` with a memcmp filter on the mint field at byte offset 40.
 
 ### Path Parameters
 
@@ -68,28 +68,62 @@ Verify lock coverage for a token mint. Returns aggregate and individual lock inf
 ### Example Request
 
 ```
-GET /api/v1/verify/mint/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+GET /api/v1/verify/mint/6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU
 ```
 
-### Example Response (Planned)
+### Example Response (locks found)
 
 ```json
 {
   "verified": true,
-  "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-  "totalLocked": "5000000000",
-  "lockCount": 3,
+  "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+  "totalLocks": 1,
+  "activeLocks": 1,
   "locks": [
     {
-      "lockPda": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
-      "lockedAmount": "2000000000",
-      "unlockTimestamp": 1735689600,
-      "owner": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+      "lockPda": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG",
+      "lock": {
+        "owner": "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+        "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+        "vault": "7kKtRoQuE3ZRJHRUtcUX7HPwJB3t6tLDeZuDXN3gJx7v",
+        "amount": "10916771364",
+        "unlockTimestamp": 1784359800,
+        "createdAt": 1781767586,
+        "lockSeed": "1781767584981",
+        "isUnlocked": false,
+        "bump": 255,
+        "vaultBump": 254,
+        "projectName": "CBS_Coin (2/2)",
+        "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "tokenType": "lp"
+      }
     }
   ],
-  "slot": 285000000
+  "message": "CBS Locker locks found for mint."
 }
 ```
+
+### Example Response (no locks)
+
+```json
+{
+  "verified": false,
+  "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+  "totalLocks": 0,
+  "activeLocks": 0,
+  "locks": [],
+  "message": "No CBS Locker locks found for mint."
+}
+```
+
+### Active lock definition
+
+A lock counts as **active** when:
+
+- `lock.isUnlocked === false`
+- current Unix time is before `lock.unlockTimestamp`
 
 ### Supported Asset Types
 
@@ -97,12 +131,12 @@ GET /api/v1/verify/mint/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 - Standard AMM LP Tokens (when the mint represents an LP token)
 - Raydium CLMM Position NFTs (when queried by position mint)
 
-### Error Responses (Planned)
+### Error Responses
 
 | Status | Description |
 |--------|-------------|
-| `400` | Invalid mint address format |
-| `404` | No locks found for this mint |
+| `200` | Invalid mint address (`verified: false` in body) |
+| `200` | No locks found (`verified: false` in body) |
 | `503` | Solana RPC unavailable |
 
 ---
