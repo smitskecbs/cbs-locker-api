@@ -141,6 +141,79 @@ A lock counts as **active** when:
 
 ---
 
+## GET /api/v1/verify/token/{mint}
+
+Integration-friendly summary for a token mint. Uses the same on-chain lock search as `/verify/mint`, but returns aggregate fields only.
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `mint` | `string` | Base58-encoded SPL token mint address |
+
+### Example Request
+
+```
+GET /api/v1/verify/token/6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU
+```
+
+### Example Response (active locks)
+
+```json
+{
+  "verified": true,
+  "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+  "locker": "CBS Token Locker",
+  "tokenType": "lp",
+  "totalLocks": 7,
+  "activeLocks": 1,
+  "activeLockedAmount": "10916771364",
+  "nextUnlockTimestamp": 1784359800,
+  "largestActiveLock": {
+    "lockPda": "ANwBf2LnyJZ7YimEGNGZwbtAJ6M5ZU1P8w1gZCQPrvyG",
+    "amount": "10916771364",
+    "unlockTimestamp": 1784359800
+  },
+  "message": "Active CBS Locker lock found for mint."
+}
+```
+
+### Example Response (locks exist, none active)
+
+```json
+{
+  "verified": false,
+  "mint": "6JNhvBSgbkZr66PDmZUmrtGaJj43qQZb51YerWoZhqSU",
+  "programId": "DA1sh6XTa13QQ23sLNdcPfCZF5SGMKXXYLxcfAJYcCmU",
+  "locker": "CBS Token Locker",
+  "tokenType": "lp",
+  "totalLocks": 7,
+  "activeLocks": 0,
+  "message": "No active CBS Locker locks found for mint."
+}
+```
+
+### Summary field rules
+
+| Field | Rule |
+|-------|------|
+| `activeLocks` | Locks where `isUnlocked === false` and `now < unlockTimestamp` |
+| `activeLockedAmount` | Sum of active lock `amount` values (string) |
+| `tokenType` | From active locks if any, else first known lock, else `unknown` |
+| `nextUnlockTimestamp` | Earliest `unlockTimestamp` among active locks |
+| `largestActiveLock` | Active lock with the highest `amount` |
+
+### Error Responses
+
+| Status | Description |
+|--------|-------------|
+| `200` | Invalid mint address (`verified: false` in body) |
+| `200` | No locks or no active locks (`verified: false` in body) |
+| `503` | Solana RPC unavailable |
+
+---
+
 ## GET /api/v1/verify/pair/{pairAddress}
 
 Verify lock status for a liquidity pair. Useful for DEX integrations that need to confirm LP token or CLMM position locks tied to a specific trading pair.
